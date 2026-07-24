@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta property="og:title" content="🎮 매크로 마스터 아케이드">
+<meta property="og:description" content="CPI, 연준, GDP, LEI, 재정수지, 노동시장 — 15문제 도전! 당신은 몇 티어? 🏆">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#0B0B1A">
+<title>매크로 마스터 아케이드</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0B0B1A;--card:#1a1a35;
+  --mint:#00E5A0;--pink:#FF6B9D;--yellow:#FFD93D;
+  --red:#FF4757;--teal:#4ECDC4;--purple:#A78BFA;
+  --text:#fff;--muted:rgba(255,255,255,.5);
+  --radius:14px;
+}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
+  color:var(--text);-webkit-tap-highlight-color:transparent;
+  overscroll-behavior:none;
+  background:linear-gradient(135deg,#0B0B1A 0%,#1A1030 50%,#0B1A2E 100%);
+  background-size:400% 400%;animation:bgShift 12s ease infinite;
+}
+@keyframes bgShift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+#app{width:100%;max-width:440px;margin:0 auto;height:100dvh;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;padding:20px 20px env(safe-area-inset-bottom,20px);opacity:0;pointer-events:none;transition:opacity .35s ease,transform .35s ease;transform:translateY(12px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.screen.active{opacity:1;pointer-events:auto;transform:translateY(0)}
+
+/* PARTICLES */
+.particles{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:0}
+.particle{position:absolute;border-radius:50%;opacity:.25;animation:floatP linear infinite}
+@keyframes floatP{0%{transform:translateY(100vh) scale(0)}50%{opacity:.4}100%{transform:translateY(-20vh) scale(1);opacity:0}}
+
+/* START */
+.start-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;position:relative;z-index:1}
+.logo{text-align:center}
+.logo-icon{font-size:60px;display:block;animation:bounce 2s ease infinite}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.logo h1{font-size:28px;font-weight:800;letter-spacing:-1px;background:linear-gradient(135deg,var(--mint),var(--teal),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-size:200% 200%;animation:gradText 3s ease infinite}
+@keyframes gradText{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+.logo p{color:var(--muted);font-size:14px;margin-top:6px}
+.input-wrap{width:100%;max-width:300px}
+.input-wrap input{width:100%;padding:14px 16px;font-size:16px;border:2px solid rgba(255,255,255,.12);border-radius:var(--radius);background:var(--card);color:var(--text);text-align:center;outline:none;transition:border-color .25s}
+.input-wrap input:focus{border-color:var(--mint)}
+.input-wrap input::placeholder{color:var(--muted)}
+.btn{width:100%;max-width:300px;padding:16px;font-size:17px;font-weight:700;border:none;border-radius:var(--radius);cursor:pointer;transition:transform .12s,box-shadow .2s;-webkit-user-select:none;user-select:none}
+.btn:active{transform:scale(.96)}
+.btn-primary{background:linear-gradient(135deg,var(--mint),var(--teal));color:#0B0B1A;box-shadow:0 4px 20px rgba(0,229,160,.3)}
+.btn-secondary{background:var(--card);color:var(--text);border:2px solid rgba(255,255,255,.12)}
+.btn-pink{background:linear-gradient(135deg,var(--pink),var(--purple));color:#fff;box-shadow:0 4px 20px rgba(255,107,157,.25)}
+.btn:disabled{opacity:.4;pointer-events:none}
+.start-footer{color:var(--muted);font-size:12px;text-align:center;padding-top:8px}
+
+/* COUNTDOWN */
+.cd-overlay{position:fixed;inset:0;z-index:100;display:flex;align-items:center;justify-content:center;background:rgba(11,11,26,.92);backdrop-filter:blur(8px)}
+.cd-num{font-size:80px;font-weight:900;animation:countPop .55s ease;background:linear-gradient(135deg,var(--mint),var(--pink));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+@keyframes countPop{0%{transform:scale(2.5);opacity:0}60%{transform:scale(.9);opacity:1}100%{transform:scale(1)}}
+
+/* GAME */
+.game-top{display:flex;align-items:center;justify-content:space-between;padding-bottom:10px}
+.sound-btn{background:none;border:none;font-size:22px;cursor:pointer;padding:6px;opacity:.7;transition:opacity .2s}
+.sound-btn:active{opacity:1}
+.game-meta{display:flex;align-items:center;gap:12px}
+.game-progress{font-size:13px;font-weight:600;color:var(--muted)}
+.game-progress span{color:var(--text)}
+.lives{display:flex;gap:3px;font-size:16px}
+.combo-badge{font-size:12px;font-weight:800;color:var(--yellow);padding:3px 8px;border-radius:10px;background:rgba(255,217,61,.15);display:none;animation:popIn .3s ease}
+.combo-badge.show{display:inline-block}
+.timer-bar{width:100%;height:6px;border-radius:3px;background:rgba(255,255,255,.08);margin-bottom:14px;overflow:hidden}
+.timer-fill{height:100%;border-radius:3px;transition:width .1s linear,background .3s;background:var(--mint)}
+.timer-fill.warn{background:var(--yellow)}
+.timer-fill.danger{background:var(--red);animation:pulse .5s infinite}
+.diff-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:10px;letter-spacing:.5px}
+.diff-easy{background:rgba(0,229,160,.15);color:var(--mint)}
+.diff-normal{background:rgba(255,217,61,.15);color:var(--yellow)}
+.diff-hard{background:rgba(255,71,87,.15);color:var(--red)}
+.question-area{flex:1;display:flex;flex-direction:column;justify-content:center}
+.question-text{font-size:18px;font-weight:600;line-height:1.6;margin-bottom:18px;min-height:60px;word-break:keep-all}
+.options{display:flex;flex-direction:column;gap:10px;padding-bottom:12px}
+.option-btn{width:100%;padding:14px 16px;font-size:15px;font-weight:500;text-align:left;border:2px solid rgba(255,255,255,.08);border-radius:var(--radius);background:var(--card);color:var(--text);cursor:pointer;transition:all .15s;-webkit-user-select:none;user-select:none;display:flex;align-items:center;gap:10px}
+.option-btn:active:not(.locked){background:rgba(255,255,255,.08);transform:scale(.98)}
+.option-btn .ol{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;background:rgba(255,255,255,.06)}
+.option-btn.correct{border-color:var(--mint);background:rgba(0,229,160,.1);animation:popIn .3s ease}
+.option-btn.correct .ol{background:var(--mint);color:#0B0B1A}
+.option-btn.wrong{border-color:var(--red);background:rgba(255,71,87,.1);animation:shake .35s ease}
+.option-btn.wrong .ol{background:var(--red);color:#fff}
+.option-btn.locked{pointer-events:none;opacity:.4}
+.option-btn.correct.locked{opacity:1}
+
+/* SCORE POPUP */
+.score-pop{position:fixed;left:50%;font-size:22px;font-weight:800;pointer-events:none;z-index:50;animation:floatUp .9s ease-out forwards}
+.score-pop.bonus{color:var(--mint)}
+.score-pop.combo{color:var(--yellow);font-size:18px}
+@keyframes floatUp{0%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,-80px)}}
+
+/* RESULT */
+.result-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;position:relative;z-index:1}
+.tier-icon{font-size:72px;animation:popIn .5s ease}
+.tier-name{font-size:24px;font-weight:800;letter-spacing:-1px}
+.tier-sub{color:var(--muted);font-size:14px;margin-top:-4px;font-style:italic}
+.result-score{font-size:44px;font-weight:800;background:linear-gradient(135deg,var(--mint),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin:2px 0}
+.result-detail{color:var(--muted);font-size:15px}
+.result-rank{padding:10px 22px;border-radius:var(--radius);background:var(--card);font-size:15px;border:1px solid rgba(255,255,255,.06)}
+.result-rank strong{color:var(--mint)}
+.result-btns{width:100%;max-width:300px;display:flex;flex-direction:column;gap:10px;margin-top:6px}
+.share-toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--mint);color:#0B0B1A;padding:10px 24px;border-radius:var(--radius);font-size:14px;font-weight:600;opacity:0;transition:opacity .3s;pointer-events:none;z-index:99}
+.share-toast.show{opacity:1}
+
+/* CONFETTI */
+.confetti{position:absolute;width:8px;height:8px;border-radius:2px;animation:confettiDrop linear forwards;pointer-events:none}
+@keyframes confettiDrop{0%{transform:translateY(-20px) rotate(0);opacity:1}100%{transform:translateY(100vh) rotate(720deg);opacity:0}}
+
+/* LEADERBOARD */
+.lb-title{font-size:22px;font-weight:800;text-align:center;margin-bottom:14px}
+.lb-list{flex:1;display:flex;flex-direction:column;gap:8px;overflow-y:auto;padding-bottom:16px}
+.lb-row{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:var(--radius);background:var(--card);font-size:14px}
+.lb-row.me{border:2px solid var(--mint);background:rgba(0,229,160,.06)}
+.lb-rank{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;background:rgba(255,255,255,.06)}
+.lb-row:nth-child(1) .lb-rank{background:linear-gradient(135deg,#FFD700,#FFA500);color:#0B0B1A}
+.lb-row:nth-child(2) .lb-rank{background:linear-gradient(135deg,#C0C0C0,#888);color:#0B0B1A}
+.lb-row:nth-child(3) .lb-rank{background:linear-gradient(135deg,#CD7F32,#A0522D);color:#fff}
+.lb-name{flex:1;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-score{font-weight:700;color:var(--mint)}
+.lb-tier{font-size:16px}
+.lb-empty{text-align:center;color:var(--muted);padding:40px 0;font-size:15px}
+.back-btn{margin-top:auto;padding-top:10px}
+
+@keyframes popIn{0%{transform:scale(.6);opacity:0}50%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+@keyframes shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+@media(max-height:660px){
+  .logo-icon{font-size:44px}
+  .logo h1{font-size:22px}
+  .question-text{font-size:16px;min-height:48px}
+  .option-btn{padding:12px 14px;font-size:14px}
+  .tier-icon{font-size:56px}
+  .result-score{font-size:36px}
+}
+</style>
+</head>
+<body>
+<div class="particles" id="particles"></div>
+<div id="app">
+  <!-- START -->
+  <div id="screen-start" class="screen active">
+    <div class="start-wrap">
+      <div class="logo">
+        <span class="logo-icon">🎮</span>
+        <h1>매크로 마스터<br>아케이드</h1>
+        <p>15문제 도전! 당신은 몇 티어?</p>
+      </div>
+      <div class="input-wrap"><input id="nickname" type="text" placeholder="닉네임을 입력하세요" maxlength="12" autocomplete="off"></div>
+      <button class="btn btn-primary" id="btn-start" disabled>🚀 게임 시작</button>
+      <button class="btn btn-secondary" id="btn-lb-start">🏆 리더보드</button>
+      <div class="start-footer">CPI · 연준 · GDP · LEI · 재정수지 · 노동시장</div>
+    </div>
+  </div>
+  <!-- GAME -->
+  <div id="screen-game" class="screen">
+    <div class="game-top">
+      <button class="sound-btn" id="btn-sound">🔊</button>
+      <span class="combo-badge" id="combo-badge"></span>
+      <div class="game-meta">
+        <div class="game-progress"><span id="q-num">1</span>/<span id="q-total">15</span></div>
+        <div class="lives" id="lives"></div>
+      </div>
+    </div>
+    <div class="timer-bar"><div class="timer-fill" id="timer-fill"></div></div>
+    <div id="diff-badge" class="diff-badge diff-easy">EASY</div>
+    <div class="question-area">
+      <div class="question-text" id="question-text"></div>
+      <div class="options" id="options"></div>
+    </div>
+  </div>
+  <!-- RESULT -->
+  <div id="screen-result" class="screen">
+    <div class="result-wrap" id="result-wrap">
+      <div class="tier-icon" id="tier-icon"></div>
+      <div class="tier-name" id="tier-name"></div>
+      <div class="tier-sub" id="tier-sub"></div>
+      <div class="result-score" id="result-score"></div>
+      <div class="result-detail" id="result-detail"></div>
+      <div class="result-rank" id="result-rank"></div>
+      <div class="result-btns">
+        <button class="btn btn-primary" id="btn-share">📋 결과 공유하기</button>
+        <button class="btn btn-secondary" id="btn-lb-result">🏆 리더보드</button>
+        <button class="btn btn-pink" id="btn-retry">🔄 다시 도전</button>
+      </div>
+    </div>
+    <div class="share-toast" id="share-toast">클립보드에 복사됨!</div>
+  </div>
+  <!-- LEADERBOARD -->
+  <div id="screen-lb" class="screen">
+    <div class="lb-title">🏆 리더보드</div>
+    <div class="lb-list" id="lb-list"></div>
+    <div class="back-btn"><button class="btn btn-secondary" id="btn-lb-back">← 돌아가기</button></div>
+  </div>
+</div>
+
+<script>
+// ─── PARTICLES ───
+(function(){
+  const c = document.getElementById('particles');
+  const colors = ['#00E5A0','#FF6B9D','#4ECDC4','#A78BFA','#FFD93D'];
+  for(let i=0;i<18;i++){
+    const p=document.createElement('div');
+    p.className='particle';
+    const s=3+Math.random()*5;
+    p.style.cssText=`width:${s}px;height:${s}px;left:${Math.random()*100}%;background:${colors[i%colors.length]};animation-duration:${6+Math.random()*8}s;animation-delay:${Math.random()*6}s;bottom:${-10-Math.random()*20}%`;
+    c.appendChild(p);
+  }
+})();
+
+// ─── STORAGE ───
+const store={
+  async get(k,shared=false){if(window.storage){try{return await window.storage.get(k,shared)}catch(e){}}try{const v=localStorage.getItem((shared?'s:':'')+k);return v?{key:k,value:v}:null}catch(e){return null}},
+  async set(k,v,shared=false){if(window.storage){try{return await window.storage.set(k,v,shared)}catch(e){}}try{localStorage.setItem((shared?'s:':'')+k,v);return{key:k,value:v}}catch(e){return null}}
+};
+
+// ─── QUESTIONS (쉬운 표현) ───
+const QUESTIONS={
+easy:[
+  {q:"연준(Fed)의 목표 2가지는?",o:["경제 성장과 재정 건전성","물가 안정과 최대 고용","환율 안정과 수출 촉진","금융 안정과 규제 강화"],a:1},
+  {q:"GDP를 구성하는 항목이 아닌 것은?",o:["소비 (C)","투자 (I)","세금 (T)","순수출 (NX)"],a:2},
+  {q:"미국 GDP에서 가장 큰 비중을 차지하는 건?",o:["정부 지출","민간 투자","개인 소비","순수출"],a:2},
+  {q:"근원 CPI에서 빠지는 항목은?",o:["주거비, 의료비","식품, 에너지","교통, 통신","의류, 교육"],a:1},
+  {q:"재정적자란?",o:["수출 < 수입","정부가 버는 것보다 더 많이 쓰는 것","저축 < 투자","외채 > 외환보유고"],a:1},
+  {q:"비농업 고용(NFP)에 포함 안 되는 직종은?",o:["제조업","서비스업","농업","건설업"],a:2},
+  {q:"연준이 물가 판단에 가장 중요하게 보는 지표는?",o:["CPI","PPI","PCE","GDP 디플레이터"],a:2},
+  {q:"경상수지 적자란?",o:["재정이 부족한 것","자본이 빠져나가는 것","수입이 수출보다 많은 상태","외환보유고가 줄어드는 것"],a:2}
+],
+normal:[
+  {q:"CPI에서 가장 큰 비중을 차지하는 항목은?",o:["식품","주거(Shelter)","에너지","교통"],a:1},
+  {q:"연준이 금리를 올리면 채권 가격은?",o:["올라간다","내려간다","변화 없다","알 수 없다"],a:1},
+  {q:"장단기 금리가 뒤집히면(역전) 무엇을 암시할까?",o:["경기 호황","인플레이션 급등","경기침체 가능성","통화 가치 상승"],a:2},
+  {q:"LEI(경기선행지수) 구성요소에 포함 안 되는 것은?",o:["신규 실업수당 청구건수","S&P 500 주가","GDP 성장률","ISM 신규주문"],a:2},
+  {q:"U-6 실업률이 U-3보다 높은 이유는?",o:["장기 실업자만 포함해서","불완전 고용 + 한계 근로자 포함","자발적 실업 포함","비경활인구 포함"],a:1},
+  {q:"양적긴축(QT)이란?",o:["금리를 올리는 것","재정 지출을 줄이는 것","연준이 보유 자산을 줄이는 것","은행 지준율을 높이는 것"],a:2},
+  {q:"달러가 강해지면 미국 수출은?",o:["경쟁력 UP","영향 없음","경쟁력 DOWN","단기 상승 후 하락"],a:2},
+  {q:"LEI가 계속 떨어지면 무슨 뜻?",o:["경기 과열","앞으로 경기가 안 좋아질 수 있다","금리 인상 예고","인플레 가속"],a:1}
+],
+hard:[
+  {q:"Sahm Rule은 어떤 조건에서 경기침체를 경고?",o:["실업률 > 5%","실업률 3개월 평균이 1년 최저치보다 0.5%p↑","GDP 2분기 연속 마이너스","CPI < 2%"],a:1},
+  {q:"CPI가 한 달에 0.3% 올랐다면, 1년으로 환산하면?",o:["약 1.8%","약 2.4%","약 3.7%","약 4.2%"],a:2},
+  {q:"'Bad news is good news'가 시장에서 뜻하는 것은?",o:["나쁜 뉴스 = 투자 기회","안 좋은 지표 → 금리 인하 기대 → 자산가격↑","실적 부진 → 구조조정 촉진","침체 → 혁신 가속"],a:1},
+  {q:"기초재정수지(Primary Balance)란?",o:["GDP 대비 재정수지 비율","이자 비용 빼고 계산한 재정수지","경상수지 - 이전소득","세입 - 사회보장비"],a:1},
+  {q:"JOLTS에서 자발적 이직률(Quits Rate)이 높아지면?",o:["노동시장 악화 신호","노동시장이 좋다는 신호","구조조정 증가","실업률 상승 전조"],a:1},
+  {q:"미국 국가부채는 GDP의 약 몇 %? (2024 기준)",o:["약 60%","약 85%","약 120%","약 150%"],a:2},
+  {q:"채권 듀레이션이 길면 어떤 특징?",o:["신용 위험 증가","금리 변화에 가격이 더 크게 움직임","유동성 좋아짐","이자 수익 증가"],a:1}
+]};
+
+// ─── TIERS (재미 요소!) ───
+const TIERS=[
+  {min:14,icon:"🏆",name:"파월의 후계자",sub:"연준 의장 자리를 노려보세요!",color:"#FFD700"},
+  {min:11,icon:"📈",name:"월가의 개미",sub:"매크로 센스, 프로급입니다!",color:"#00E5A0"},
+  {min:8,icon:"📊",name:"경제 덕후",sub:"조금만 더 하면 월가 입성!",color:"#4ECDC4"},
+  {min:5,icon:"🐣",name:"경린이",sub:"경제 뉴스를 매일 읽어보세요!",color:"#FFD93D"},
+  {min:0,icon:"🫠",name:"매크로? 먹는 건가요?",sub:"매크로 마스터와 함께 처음부터!",color:"#FF6B9D"}
+];
+function getTier(c){return TIERS.find(t=>c>=t.min)}
+
+// ─── STATE ───
+let state={name:'',questions:[],current:0,correct:0,score:0,lives:3,maxLives:3,timer:null,timeLeft:15,soundOn:true,bgmStarted:false,previousScreen:'start',answered:false,combo:0,maxCombo:0,entryTs:0};
+
+// ─── AUDIO ───
+let sfxSynth,bgmBass,bgmLead,bgmArp,audioReady=false;
+async function initAudio(){
+  if(audioReady)return;
+  try{
+    await Tone.start();
+    Tone.Transport.bpm.value=132;
+    sfxSynth=new Tone.PolySynth(Tone.Synth,{oscillator:{type:'triangle'},envelope:{attack:0.01,decay:0.12,sustain:0,release:0.08},volume:-10}).toDestination();
+    const bass=new Tone.Synth({oscillator:{type:'square'},envelope:{attack:0.005,decay:0.12,sustain:0.3,release:0.05},volume:-20}).toDestination();
+    const lead=new Tone.Synth({oscillator:{type:'square'},envelope:{attack:0.005,decay:0.08,sustain:0.15,release:0.05},volume:-18}).toDestination();
+    const arp=new Tone.Synth({oscillator:{type:'triangle'},envelope:{attack:0.005,decay:0.06,sustain:0.08,release:0.04},volume:-22}).toDestination();
+    bgmBass=new Tone.Sequence((t,n)=>{if(n)bass.triggerAttackRelease(n,'16n',t)},['C2','C2',null,'C2','C2',null,'C2',null,'A1','A1',null,'A1','A1',null,'A1',null,'F1','F1',null,'F1','F1',null,'F1',null,'G1','G1',null,'G1','G1','G1','G1',null],'8n');
+    bgmLead=new Tone.Sequence((t,n)=>{if(n)lead.triggerAttackRelease(n,'16n',t)},['C4',null,'E4','G4',null,'C5',null,'G4','A3',null,'C4','E4',null,'A4',null,'E4','F3',null,'A3','C4',null,'F4',null,'C4','G3',null,'B3','D4','G4',null,'D4',null],'8n');
+    bgmArp=new Tone.Sequence((t,n)=>{if(n)arp.triggerAttackRelease(n,'32n',t)},['C5','E5','G5','C6','G5','E5','C5','E5','A4','C5','E5','A5','E5','C5','A4','C5','F4','A4','C5','F5','C5','A4','F4','A4','G4','B4','D5','G5','D5','B4','G4','B4'],'16n');
+    bgmBass.start(0);bgmLead.start(0);bgmArp.start(0);
+    audioReady=true;
+  }catch(e){console.log('Audio init failed',e)}
+}
+function startBGM(){if(!audioReady||!state.soundOn)return;Tone.Transport.start();state.bgmStarted=true}
+function stopBGM(){try{Tone.Transport.stop()}catch(e){}state.bgmStarted=false}
+function playCorrect(){if(!audioReady||!state.soundOn)return;sfxSynth.triggerAttackRelease(['E5','G5'],'16n',Tone.now());sfxSynth.triggerAttackRelease(['G5','C6'],'16n',Tone.now()+0.07)}
+function playWrong(){if(!audioReady||!state.soundOn)return;sfxSynth.triggerAttackRelease(['C3','Eb3'],'8n',Tone.now())}
+function playGameOver(){if(!audioReady||!state.soundOn)return;['C4','A3','F3','C3'].forEach((n,i)=>sfxSynth.triggerAttackRelease(n,'8n',Tone.now()+i*.15))}
+function playVictory(){if(!audioReady||!state.soundOn)return;['C5','E5','G5','C6'].forEach((n,i)=>sfxSynth.triggerAttackRelease(n,'16n',Tone.now()+i*.09))}
+function playCombo(){if(!audioReady||!state.soundOn)return;sfxSynth.triggerAttackRelease('E6','32n',Tone.now()+0.12)}
+function vibrate(ms){try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}}
+
+// ─── HELPERS ───
+const $=id=>document.getElementById(id);
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));$(id).classList.add('active')}
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function escHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
+function showScorePopup(text,type){
+  const el=document.createElement('div');
+  el.className='score-pop '+(type||'bonus');
+  el.textContent=text;
+  el.style.bottom='45%';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),950);
+}
+
+function createConfetti(container){
+  const colors=['#00E5A0','#FF6B9D','#FFD93D','#4ECDC4','#A78BFA','#FF4757'];
+  for(let i=0;i<40;i++){
+    const el=document.createElement('div');el.className='confetti';
+    el.style.cssText=`left:${Math.random()*100}%;top:-10px;width:${5+Math.random()*6}px;height:${5+Math.random()*6}px;background:${colors[Math.floor(Math.random()*colors.length)]};animation-delay:${Math.random()*1.5}s;animation-duration:${2+Math.random()*2.5}s;border-radius:${Math.random()>.5?'50%':'2px'}`;
+    container.appendChild(el);
+    setTimeout(()=>el.remove(),5000);
+  }
+}
+
+// ─── COUNTDOWN ───
+function showCountdown(){
+  return new Promise(resolve=>{
+    const ov=document.createElement('div');ov.className='cd-overlay';document.body.appendChild(ov);
+    const nums=['3','2','1','GO!'];let i=0;
+    (function next(){
+      if(i>=nums.length){ov.remove();return resolve()}
+      ov.innerHTML=`<div class="cd-num">${nums[i]}</div>`;i++;setTimeout(next,600);
+    })();
+  });
+}
+
+// ─── PREPARE ───
+function prepareQuestions(){
+  const e=shuffle(QUESTIONS.easy).slice(0,5).map(q=>({...q,diff:'easy'}));
+  const n=shuffle(QUESTIONS.normal).slice(0,5).map(q=>({...q,diff:'normal'}));
+  const h=shuffle(QUESTIONS.hard).slice(0,5).map(q=>({...q,diff:'hard'}));
+  return[...e,...n,...h].map(q=>{
+    const idx=q.o.map((_,i)=>i);const sh=shuffle(idx);
+    return{...q,o:sh.map(i=>q.o[i]),a:sh.indexOf(q.a)};
+  });
+}
+
+// ─── RENDER ───
+function renderQuestion(){
+  const q=state.questions[state.current];
+  if(!q)return endGame();
+  state.answered=false;
+  $('q-num').textContent=state.current+1;
+  $('q-total').textContent=state.questions.length;
+  $('lives').innerHTML='❤️'.repeat(state.lives)+'🖤'.repeat(state.maxLives-state.lives);
+  const badge=$('diff-badge');badge.className='diff-badge';
+  if(q.diff==='easy'){badge.textContent='EASY';badge.classList.add('diff-easy')}
+  else if(q.diff==='normal'){badge.textContent='NORMAL';badge.classList.add('diff-normal')}
+  else{badge.textContent='HARD';badge.classList.add('diff-hard')}
+  $('question-text').textContent=q.q;
+  const labels=['A','B','C','D'];
+  $('options').innerHTML=q.o.map((opt,i)=>`<button class="option-btn" data-idx="${i}"><span class="ol">${labels[i]}</span><span>${opt}</span></button>`).join('');
+  $('options').querySelectorAll('.option-btn').forEach(btn=>{btn.addEventListener('click',()=>handleAnswer(parseInt(btn.dataset.idx)))});
+  // combo badge
+  const cb=$('combo-badge');
+  if(state.combo>=2){cb.textContent=`🔥 ${state.combo} COMBO`;cb.classList.add('show')}
+  else{cb.classList.remove('show')}
+  startTimer();
+}
+
+function startTimer(){
+  state.timeLeft=15;const fill=$('timer-fill');fill.style.width='100%';fill.className='timer-fill';
+  clearInterval(state.timer);
+  state.timer=setInterval(()=>{
+    state.timeLeft-=0.1;const pct=Math.max(0,(state.timeLeft/15)*100);
+    fill.style.width=pct+'%';
+    if(pct<20)fill.className='timer-fill danger';
+    else if(pct<40)fill.className='timer-fill warn';
+    if(state.timeLeft<=0){clearInterval(state.timer);handleTimeout()}
+  },100);
+}
+
+function handleAnswer(idx){
+  if(state.answered)return;state.answered=true;clearInterval(state.timer);
+  const q=state.questions[state.current];
+  const btns=$('options').querySelectorAll('.option-btn');
+  btns.forEach(b=>b.classList.add('locked'));
+  if(idx===q.a){
+    btns[idx].classList.remove('locked');btns[idx].classList.add('correct');
+    state.correct++;state.combo++;
+    if(state.combo>state.maxCombo)state.maxCombo=state.combo;
+    const mult=state.combo>=4?2.5:state.combo>=3?2:state.combo>=2?1.5:1;
+    const base=q.diff==='hard'?100:q.diff==='normal'?75:50;
+    const timeBonus=Math.round(state.timeLeft*(q.diff==='hard'?6:q.diff==='normal'?4:3));
+    const pts=Math.round((base+timeBonus)*mult);
+    state.score+=pts;
+    playCorrect();
+    showScorePopup(`+${pts}`,'bonus');
+    if(state.combo>=2){playCombo();showScorePopup(`🔥 x${mult} COMBO!`,'combo')}
+  }else{
+    btns[idx].classList.remove('locked');btns[idx].classList.add('wrong');
+    btns[q.a].classList.remove('locked');btns[q.a].classList.add('correct');
+    state.lives--;state.combo=0;
+    $('lives').innerHTML='❤️'.repeat(Math.max(0,state.lives))+'🖤'.repeat(state.maxLives-Math.max(0,state.lives));
+    playWrong();vibrate(120);
+  }
+  setTimeout(()=>{if(state.lives<=0)endGame();else{state.current++;renderQuestion()}},1100);
+}
+
+function handleTimeout(){
+  if(state.answered)return;state.answered=true;
+  const q=state.questions[state.current];
+  const btns=$('options').querySelectorAll('.option-btn');
+  btns.forEach(b=>b.classList.add('locked'));
+  btns[q.a].classList.remove('locked');btns[q.a].classList.add('correct');
+  state.lives--;state.combo=0;
+  $('lives').innerHTML='❤️'.repeat(Math.max(0,state.lives))+'🖤'.repeat(state.maxLives-Math.max(0,state.lives));
+  playWrong();vibrate(120);
+  setTimeout(()=>{if(state.lives<=0)endGame();else{state.current++;renderQuestion()}},1100);
+}
+
+// ─── END ───
+async function endGame(){
+  clearInterval(state.timer);stopBGM();
+  const tier=getTier(state.correct);const total=state.current;
+  const isGameOver=state.lives<=0;
+  if(isGameOver)playGameOver();else playVictory();
+  $('tier-icon').textContent=tier.icon;
+  $('tier-name').textContent=tier.name;
+  $('tier-name').style.color=tier.color;
+  $('tier-name').style.background='none';$('tier-name').style['-webkit-text-fill-color']='unset';
+  $('tier-sub').textContent=tier.sub;
+  $('result-score').textContent=state.score.toLocaleString()+'점';
+  $('result-detail').textContent=isGameOver?`💀 게임오버! ${state.correct}/${total} 정답`:`🎉 완주! ${state.correct}/${total} 정답 · ❤️${state.lives}개 남음`;
+  if(state.maxCombo>=2)$('result-detail').textContent+=` · 🔥최대 ${state.maxCombo}콤보`;
+  const rank=await saveAndGetRank();
+  if(rank>0){$('result-rank').innerHTML=`전체 <strong>${rank}위</strong>`;$('result-rank').style.display=''}
+  else $('result-rank').style.display='none';
+  showScreen('screen-result');
+  if(state.correct>=8)createConfetti($('result-wrap'));
+}
+
+async function saveAndGetRank(){
+  try{
+    const res=await store.get('macro-lb',true);let lb=[];
+    if(res&&res.value)lb=JSON.parse(res.value);
+    state.entryTs=Date.now();
+    lb.push({name:state.name,score:state.score,correct:state.correct,tier:getTier(state.correct).icon,ts:state.entryTs});
+    lb.sort((a,b)=>b.score-a.score);lb=lb.slice(0,50);
+    await store.set('macro-lb',JSON.stringify(lb),true);
+    return lb.findIndex(e=>e.ts===state.entryTs)+1;
+  }catch(e){return 0}
+}
+
+async function renderLeaderboard(){
+  const list=$('lb-list');
+  try{
+    const res=await store.get('macro-lb',true);let lb=[];
+    if(res&&res.value)lb=JSON.parse(res.value);
+    if(!lb.length){list.innerHTML='<div class="lb-empty">아직 기록이 없어요!<br>첫 번째 도전자가 되어보세요 🚀</div>';return}
+    list.innerHTML=lb.slice(0,20).map((e,i)=>{
+      const isMe=e.ts===state.entryTs;
+      return`<div class="lb-row${isMe?' me':''}"><div class="lb-rank">${i+1}</div><div class="lb-name">${escHtml(e.name)}</div><div class="lb-score">${e.score.toLocaleString()}</div><div class="lb-tier">${e.tier||''}</div></div>`;
+    }).join('');
+  }catch(e){list.innerHTML='<div class="lb-empty">리더보드를 불러올 수 없습니다.</div>'}
+}
+
+function shareResult(){
+  const tier=getTier(state.correct);const total=state.current;
+  const bar='█'.repeat(state.correct)+'░'.repeat(total-state.correct);
+  const text=`🎮 매크로 마스터 아케이드\n\n${tier.icon} ${tier.name}\n${bar}\n✅ ${state.correct}/${total} 정답 · 💯 ${state.score.toLocaleString()}점\n${state.maxCombo>=2?'🔥 최대 '+state.maxCombo+'콤보!\n':''}${tier.sub}\n\n나도 도전 →`;
+  if(navigator.share){navigator.share({title:'매크로 마스터 아케이드',text})}
+  else if(navigator.clipboard){navigator.clipboard.writeText(text).then(()=>{const t=$('share-toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2000)})}
+}
+
+async function startGame(){
+  await initAudio();
+  state.name=$('nickname').value.trim();
+  state.questions=prepareQuestions();
+  state.current=0;state.correct=0;state.score=0;state.lives=3;state.combo=0;state.maxCombo=0;
+  showScreen('screen-game');
+  await showCountdown();
+  startBGM();renderQuestion();
+}
+
+// ─── BINDINGS ───
+$('nickname').addEventListener('input',()=>{$('btn-start').disabled=!$('nickname').value.trim()});
+$('nickname').addEventListener('keydown',e=>{if(e.key==='Enter'&&$('nickname').value.trim())startGame()});
+$('btn-start').addEventListener('click',startGame);
+$('btn-retry').addEventListener('click',()=>{showScreen('screen-start');$('nickname').focus()});
+$('btn-share').addEventListener('click',shareResult);
+$('btn-sound').addEventListener('click',()=>{state.soundOn=!state.soundOn;$('btn-sound').textContent=state.soundOn?'🔊':'🔇';if(!state.soundOn)stopBGM();else if(!state.bgmStarted)startBGM()});
+$('btn-lb-start').addEventListener('click',async()=>{state.previousScreen='screen-start';await renderLeaderboard();showScreen('screen-lb')});
+$('btn-lb-result').addEventListener('click',async()=>{state.previousScreen='screen-result';await renderLeaderboard();showScreen('screen-lb')});
+$('btn-lb-back').addEventListener('click',()=>showScreen(state.previousScreen));
+document.body.addEventListener('touchmove',e=>{if(e.touches.length>1)e.preventDefault()},{passive:false});
+</script>
+</body>
+</html>
